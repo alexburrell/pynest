@@ -80,12 +80,7 @@ class Nest:
             self.serial = self.device_id.split(".")[1]
 
         self.status = res
-
-        #print "res.keys", res.keys()
-        #print "res[structure][structure_id].keys", res["structure"][self.structure_id].keys()
-        #print "res[device].keys", res["device"].keys()
-        #print "res[device][serial].keys", res["device"][self.serial].keys()
-        #print "res[shared][serial].keys", res["shared"][self.serial].keys()
+        print self.status
 
     def temp_in(self, temp):
         if (self.units == "F"):
@@ -114,6 +109,15 @@ class Nest:
         temp = self.temp_out(temp)
 
         print "%0.1f" % temp
+
+    def get_curtemp(self):
+      return self.temp_out(self.status["shared"][self.serial]["current_temperature"])
+
+    def get_targettemp(self):
+      return self.temp_out(self.status["shared"][self.serial]["target_temperature"])
+
+    def get_method(self):
+      return self.status["shared"][self.serial]["target_temperature_type"]
 
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
@@ -163,75 +167,3 @@ def create_parser():
 
 
    return parser
-
-def help():
-    print "syntax: nest [options] command [command_args]"
-    print "options:"
-    print "   --user <username>      ... username on nest.com"
-    print "   --password <password>  ... password on nest.com"
-    print "   --celsius              ... use celsius (the default is farenheit)"
-    print "   --serial <number>      ... optional, specify serial number of nest to use"
-    print "   --index <number>       ... optional, 0-based index of nest"
-    print "                                (use --serial or --index, but not both)"
-    print
-    print "commands: temp, fan, show, curtemp, curhumid"
-    print "    temp <temperature>    ... set target temperature"
-    print "    fan [auto|on]         ... set fan state"
-    print "    show                  ... show everything"
-    print "    curtemp               ... print current temperature"
-    print "    curhumid              ... print current humidity"
-    print
-    print "examples:"
-    print "    nest.py --user joe@user.com --password swordfish temp 73"
-    print "    nest.py --user joe@user.com --password swordfish fan auto"
-
-def main():
-    parser = create_parser()
-    (opts, args) = parser.parse_args()
-
-    if (len(args)==0) or (args[0]=="help"):
-        help()
-        sys.exit(-1)
-
-    if (not opts.user) or (not opts.password):
-        print "how about specifying a --user and --password option next time?"
-        sys.exit(-1)
-
-    if opts.celsius:
-        units = "C"
-    else:
-        units = "F"
-
-    n = Nest(opts.user, opts.password, opts.serial, opts.index, units=units)
-    n.login()
-    n.get_status()
-
-    cmd = args[0]
-
-    if (cmd == "temp"):
-        if len(args)<2:
-            print "please specify a temperature"
-            sys.exit(-1)
-        n.set_temperature(int(args[1]))
-    elif (cmd == "fan"):
-        if len(args)<2:
-            print "please specify a fan state of 'on' or 'auto'"
-            sys.exit(-1)
-        n.set_fan(args[1])
-    elif (cmd == "show"):
-        n.show_status()
-    elif (cmd == "curtemp"):
-        n.show_curtemp()
-    elif (cmd == "curhumid"):
-        print n.status["device"][n.serial]["current_humidity"]
-    else:
-        print "misunderstood command:", cmd
-        print "do 'nest.py help' for help"
-
-if __name__=="__main__":
-   main()
-
-
-
-
-
